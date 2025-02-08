@@ -1,7 +1,7 @@
 ### Check out my article on "Simplifying Ingress Resource on AWS EKS: A Guide to AWS Load Balancer Controller"
 https://medium.com/@kennyangjy/simplifying-ingress-resource-on-aws-eks-a-guide-to-aws-load-balancer-controller-835d681aa219
 
-<img src="./ingress-flow.jpg"  width="50%" height="50%">
+<img src="./ingress-flow.jpg"  width="75%" height="75%">
 
 ---
 > *Caution:* Cost will be involved in creating these resources. For more information, do visit the relavent resource pricing pages as it differs from region to region.
