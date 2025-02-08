@@ -11,6 +11,14 @@ terraform {
   }
 
   required_version = "~> 1.10"
+
+  # backend "s3" {
+  #   bucket  = "xxx"
+  #   key     = "xxx.tfstate"
+  #   region  = "ap-southeast-1"
+  #   encrypt = true
+  #   use_lockfile = true
+  # }
 }
 
 provider "aws" {
