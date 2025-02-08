@@ -1,0 +1,32 @@
+data "aws_lb" "ALB" {
+  arn  = "<ARN of ALB>"
+  name = "k8s-game2048-ingress"
+}
+
+output "ALB_dns_name" {
+  value = data.aws_lb.ALB.dns_name
+}
+
+resource "aws_route53_record" "nginx" {
+  zone_id = var.hosted_zone_id
+  name    = "nginx.${var.hosted_zone_name}"
+  type    = "CNAME"
+  ttl     = 300
+  records = [data.aws_lb.ALB.dns_name]
+}
+
+resource "aws_route53_record" "game-2048" {
+  zone_id = var.hosted_zone_id
+  name    = "2048.${var.hosted_zone_name}"
+  type    = "CNAME"
+  ttl     = 300
+  records = [data.aws_lb.ALB.dns_name]
+}
+
+resource "aws_route53_record" "all" {
+  zone_id = var.hosted_zone_id
+  name    = "*.${var.hosted_zone_name}"
+  type    = "CNAME"
+  ttl     = 300
+  records = [data.aws_lb.ALB.dns_name]
+}

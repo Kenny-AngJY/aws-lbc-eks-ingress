@@ -1,0 +1,44 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-alb-host
+  namespace: default
+  annotations:
+    alb.ingress.kubernetes.io/load-balancer-name: k8s-game2048-ingress
+
+    alb.ingress.kubernetes.io/scheme: internet-facing # internet-facing | internal
+    alb.ingress.kubernetes.io/target-type: ip # instance (The services have to be of type NodePort) | ip (No constraint to the type of service)
+    # If the target type is instance, AWS LBC will add an inbound rule on the worker node security group to allow inbound traffic on the NodePort.
+
+    # alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:<Region>:<AWS_Account_ID>:certificate/<Certificate_Identifier>
+    # alb.ingress.kubernetes.io/backend-protocol: HTTP # Specifies the protocol used when route traffic to pods.
+    # alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]'
+    # alb.ingress.kubernetes.io/ssl-redirect: '443'
+spec:
+  ingressClassName: alb
+  defaultBackend:
+    service:
+      name: httpd-node-port-service
+      port:
+        number: 80
+  rules:
+  - http:
+      paths:
+      - pathType: Prefix
+        path: /
+        backend:
+          service:
+            name: nginx-node-port-service
+            port:
+              number: 8080
+    host: "nginx.myapp.com"
+  - http:
+      paths:
+      - pathType: Prefix
+        path: /
+        backend:
+          service:
+            name: game-2048-node-port-service
+            port:
+              number: 80
+    host: "2048.myapp.com"
