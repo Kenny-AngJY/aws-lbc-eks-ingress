@@ -34,7 +34,7 @@ module "eks" {
     }
     # kube-proxy pod (that is deployed as a daemonset) shares the same IPv4 address as the node it's on.
     kube-proxy = {
-      most_recent = true
+      addon_version = "v1.31.3-eksbuild.2"
     }
     # Network interface will show all IPs used in the subnet
     # VPC CNI add-on will create the "aws-node" daemonset in the kube-system namespace.
@@ -94,6 +94,18 @@ module "eks" {
     # t3.large: 2 vCPU, 8GiB
 
     # iam_role_additional_policies = ["arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess"]
+    update_config = {
+      max_unavailable_percentage = 50
+      # max_unavailable = 2
+    }
+
+    block_device_mappings = [{
+      device_name = "/dev/xvda"
+      ebs = {
+        encrypted   = true
+        volume_type = "gp3"
+      }
+    }]
   }
 
   eks_managed_node_groups = var.use_fargate_profile ? {} : {
@@ -104,9 +116,8 @@ module "eks" {
       desired_size is ignored after the initial creation
       https://github.com/bryantbiggs/eks-desired-size-hack
       */
-      desired_size   = 1
-      instance_types = ["t3.large", "t3.medium"]
-      capacity_type  = "SPOT"
+      desired_size  = 1
+      capacity_type = "SPOT"
     }
   }
 
@@ -224,6 +235,7 @@ resource "aws_eks_addon" "amazon_cloudwatch_observability" {
   #     }
   #   }
   # })
+  depends_on = [ module.eks ]
 }
 
 resource "aws_security_group_rule" "node_port" {
