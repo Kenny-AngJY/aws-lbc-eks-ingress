@@ -12,7 +12,7 @@ resource "aws_iam_role" "AmazonEKSLoadBalancerController" {
       {
         "Effect" : "Allow",
         "Principal" : {
-          "Federated" : "${module.eks.oidc_provider_arn}"
+          "Federated" : module.eks.oidc_provider_arn
         },
         "Action" : "sts:AssumeRoleWithWebIdentity",
         "Condition" : {
@@ -343,10 +343,10 @@ resource "aws_iam_role" "eks_vpc_cni_role" {
         ],
         "Condition" : {
           "StringEquals" : {
-            "aws:SourceAccount" : "${data.aws_caller_identity.current.id}"
+            "aws:SourceAccount" : data.aws_caller_identity.current.id
           },
           "ArnEquals" : {
-            "aws:SourceArn" : "${module.eks.cluster_arn}"
+            "aws:SourceArn" : module.eks.cluster_arn
           }
         }
       }
@@ -357,7 +357,7 @@ resource "aws_iam_role" "eks_vpc_cni_role" {
       {
         "Effect" : "Allow",
         "Principal" : {
-          "Federated" : "${module.eks.oidc_provider_arn}"
+          "Federated" : module.eks.oidc_provider_arn
         },
         "Action" : "sts:AssumeRoleWithWebIdentity",
         "Condition" : {
@@ -400,7 +400,7 @@ resource "aws_iam_role" "amazon_EBS_CSI_iam_role" {
       {
         "Effect" : "Allow",
         "Principal" : {
-          "Federated" : "${module.eks.oidc_provider_arn}"
+          "Federated" : module.eks.oidc_provider_arn
         },
         "Action" : "sts:AssumeRoleWithWebIdentity",
         "Condition" : {
@@ -446,7 +446,7 @@ resource "aws_iam_role" "CloudWatchAgent" {
       {
         "Effect" : "Allow",
         "Principal" : {
-          "Federated" : "${module.eks.oidc_provider_arn}"
+          "Federated" : module.eks.oidc_provider_arn
         },
         "Action" : "sts:AssumeRoleWithWebIdentity",
         "Condition" : {
