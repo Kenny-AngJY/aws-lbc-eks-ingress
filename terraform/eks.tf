@@ -3,7 +3,7 @@ module "eks" {
   version                                = "20.33.0" # Published January 18, 2025
   create                                 = true
   cluster_name                           = local.cluster_name
-  cluster_version                        = "1.32"
+  cluster_version                        = "1.33"
   authentication_mode                    = "API"
   cluster_endpoint_private_access        = true # Indicates whether or not the Amazon EKS private API server endpoint is enabled
   cluster_endpoint_public_access         = true # Indicates whether or not the Amazon EKS public API server endpoint is enabled
@@ -34,12 +34,12 @@ module "eks" {
     }
     # kube-proxy pod (that is deployed as a daemonset) shares the same IPv4 address as the node it's on.
     kube-proxy = {
-      addon_version = "v1.31.3-eksbuild.2"
+      addon_version = "v1.33.0-eksbuild.2"
     }
     # Network interface will show all IPs used in the subnet
     # VPC CNI add-on will create the "aws-node" daemonset in the kube-system namespace.
     vpc-cni = {
-      addon_version            = "v1.19.2-eksbuild.1" # major-version.minor-version.patch-version-eksbuild.build-number.
+      addon_version            = "v1.19.5-eksbuild.1" # major-version.minor-version.patch-version-eksbuild.build-number.
       service_account_role_arn = aws_iam_role.eks_vpc_cni_role.arn
       configuration_values = jsonencode(
         {
@@ -199,7 +199,7 @@ resource "aws_eks_addon" "aws_ebs_csi_driver" {
   count                       = var.create_aws_ebs_csi_driver_add_on ? 1 : 0
   cluster_name                = module.eks.cluster_name
   addon_name                  = "aws-ebs-csi-driver"
-  addon_version               = "v1.37.0-eksbuild.1"
+  addon_version               = "v1.44.0-eksbuild.1"
   resolve_conflicts_on_update = "OVERWRITE" # NONE | OVERWRITE | PRESERVE
 
   service_account_role_arn = aws_iam_role.amazon_EBS_CSI_iam_role[0].arn
@@ -216,7 +216,7 @@ resource "aws_eks_addon" "amazon_cloudwatch_observability" {
   count                       = var.create_amazon_cloudwatch_observability_add_on ? 1 : 0
   cluster_name                = module.eks.cluster_name
   addon_name                  = "amazon-cloudwatch-observability"
-  addon_version               = "v2.6.0-eksbuild.1"
+  addon_version               = "v4.1.0-eksbuild.1"
   resolve_conflicts_on_update = "OVERWRITE" # NONE | OVERWRITE | PRESERVE
 
   # Add-on does not support EKS Pod Identity at this time. Please use IAM roles for service accounts (IRSA) with this add-on.
