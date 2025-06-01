@@ -5,7 +5,7 @@ resource "helm_release" "metrics-server" {
   repository = "https://kubernetes-sigs.github.io/metrics-server/"
   chart      = "metrics-server"
   namespace  = "kube-system"
-  version    = "3.8.2"
+  version    = "3.12.2" # chart version
 
   set {
     name  = "metrics.enabled"
@@ -22,7 +22,7 @@ resource "helm_release" "aws_load_balancer_controller" {
   repository = "https://aws.github.io/eks-charts"
   chart      = "aws-load-balancer-controller"
   namespace  = "kube-system"
-  version    = "1.11.0" # chart version
+  version    = "1.13.2" # chart version
 
   set {
     name  = "clusterName"
