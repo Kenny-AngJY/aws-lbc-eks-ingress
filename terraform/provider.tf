@@ -2,7 +2,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.93.0"
+      version = "5.100.0"
     }
     helm = {
       source  = "hashicorp/helm"
@@ -10,7 +10,7 @@ terraform {
     }
   }
 
-  required_version = "~> 1.10"
+  required_version = "~> 1.11"
 
   # backend "s3" {
   #   bucket  = "xxx"
