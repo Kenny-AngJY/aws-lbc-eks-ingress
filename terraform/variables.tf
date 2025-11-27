@@ -24,7 +24,7 @@ variable "list_of_subnet_ids" {
 variable "create_kms_key" {
   description = "Controls if a KMS key for cluster encryption should be created."
   type        = bool
-  default     = false
+  default     = true
 }
 
 # variable "kms_key_arn" {

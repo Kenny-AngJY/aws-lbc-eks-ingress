@@ -1,45 +1,34 @@
 module "eks" {
   source                                 = "terraform-aws-modules/eks/aws"
-  version                                = "20.33.0" # Published January 18, 2025
+  version                                = "21.9.0" # Published November 17, 2025
   create                                 = true
-  cluster_name                           = local.cluster_name
-  cluster_version                        = "1.33"
+  name                                   = local.cluster_name
+  kubernetes_version                     = "1.34"
   authentication_mode                    = "API"
-  cluster_endpoint_private_access        = true # Indicates whether or not the Amazon EKS private API server endpoint is enabled
-  cluster_endpoint_public_access         = true # Indicates whether or not the Amazon EKS public API server endpoint is enabled
-  cluster_endpoint_public_access_cidrs   = ["0.0.0.0/0"]
+  endpoint_private_access                = true # Indicates whether or not the Amazon EKS private API server endpoint is enabled
+  endpoint_public_access                 = true # Indicates whether or not the Amazon EKS public API server endpoint is enabled
+  endpoint_public_access_cidrs           = ["0.0.0.0/0"]
   cloudwatch_log_group_retention_in_days = 30
   create_kms_key                         = var.create_kms_key
   enable_irsa                            = true # Determines whether to create an OpenID Connect Provider for EKS to enable IRSA
 
-  /* -----------------------------------------------------------------------------------
-  Install default unmanaged add-ons, such as aws-cni, kube-proxy, and CoreDNS during cluster creation. 
-  If false, you must manually install desired add-ons (via the console, especially the Amazon VPC CNI add-on), 
-  else even though your worker nodes will join the cluster, it will fail to be ready, showing the error:
-  "container runtime network not ready: NetworkReady=false reason:NetworkPluginNotReady message:Network plugin returns error: cni plugin not initialized"
-  
-  Changing this value will force a new cluster to be created.
-  ----------------------------------------------------------------------------------- */
-  bootstrap_self_managed_addons = true
+  encryption_config = {}
 
-  # cluster_encryption_config = {
-  #   "provider_key_arn" : var.kms_key_arn
-  #   "resources" : ["secrets"]
-  # }
-  cluster_encryption_config = {}
-
-  cluster_addons = {
+  addons = {
     coredns = {
-      most_recent = true
+      before_compute = true
+      addon_version  = "v1.12.4-eksbuild.1"
     }
     # kube-proxy pod (that is deployed as a daemonset) shares the same IPv4 address as the node it's on.
     kube-proxy = {
-      addon_version = "v1.33.0-eksbuild.2"
+      before_compute = true
+      addon_version  = "v1.34.1-eksbuild.2"
     }
     # Network interface will show all IPs used in the subnet
     # VPC CNI add-on will create the "aws-node" daemonset in the kube-system namespace.
     vpc-cni = {
-      addon_version            = "v1.19.5-eksbuild.1" # major-version.minor-version.patch-version-eksbuild.build-number.
+      before_compute           = true
+      addon_version            = "v1.20.5-eksbuild.1" # major-version.minor-version.patch-version-eksbuild.build-number.
       service_account_role_arn = aws_iam_role.eks_vpc_cni_role.arn
       configuration_values = jsonencode(
         {
@@ -71,12 +60,6 @@ module "eks" {
   ----------------------------------------------------------------------------------- */
   control_plane_subnet_ids = var.create_vpc ? (var.create_eks_worker_nodes_in_private_subnet ? module.vpc[0].list_of_private_subnet_ids : module.vpc[0].list_of_public_subnet_ids) : var.list_of_subnet_ids
 
-  # self_managed_node_group_defaults = {
-  #   instance_types = ["t3.medium", "t3.large"]
-  #   # t3.medium: 2 vCPU, 4GiB
-  #   # t3.large: 2 vCPU, 8GiB
-  # }
-
   # self_managed_node_groups = {
   #   self_managed_NG1 = {
   #     desired_capacity = 2
@@ -88,26 +71,6 @@ module "eks" {
   # }
 
   # EKS Managed Node Group(s)
-  eks_managed_node_group_defaults = {
-    instance_types = ["t3.medium", "t3.large"]
-    # t3.medium: 2 vCPU, 4GiB
-    # t3.large: 2 vCPU, 8GiB
-
-    # iam_role_additional_policies = ["arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess"]
-    update_config = {
-      max_unavailable_percentage = 50
-      # max_unavailable = 2
-    }
-
-    block_device_mappings = [{
-      device_name = "/dev/xvda"
-      ebs = {
-        encrypted   = true
-        volume_type = "gp3"
-      }
-    }]
-  }
-
   eks_managed_node_groups = var.use_fargate_profile ? {} : {
     eks_managed_NG1 = {
       min_size = 1
@@ -122,29 +85,6 @@ module "eks" {
   }
 
   # Fargate Profile(s)
-  fargate_profile_defaults = {
-    iam_role_arn = aws_iam_role.AmazonEKSFargatePodExecutionRole.arn
-    timeouts = {
-      create = "15m"
-      delete = "15m"
-    }
-    selectors = [
-      {
-        namespace = "kube-system"
-        # labels = {
-        #   k8s-app = "kube-dns"
-        # }
-      },
-      {
-        # You have not defined any labels for pod selection. All Fargate compatible pods from this namespace will run on Fargate using this profile.
-        namespace = "default"
-      }
-    ]
-    #  iam_role_additional_policies = {
-    #    additional = aws_iam_policy.additional.arn
-    #  }
-  }
-
   fargate_profiles = var.use_fargate_profile ? {
     # Disabled logging because aws-logging configmap was not found. configmap "aws-logging" not found
     fargate_profile_1 = {
@@ -181,7 +121,7 @@ module "eks" {
   #   }
   # }
   ## https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html
-  cluster_enabled_log_types = [
+  enabled_log_types = [
     "audit",
     "api",
     "authenticator",
@@ -192,14 +132,11 @@ module "eks" {
   tags = local.default_tags
 }
 
-/*
-
-*/
 resource "aws_eks_addon" "aws_ebs_csi_driver" {
   count                       = var.create_aws_ebs_csi_driver_add_on ? 1 : 0
   cluster_name                = module.eks.cluster_name
   addon_name                  = "aws-ebs-csi-driver"
-  addon_version               = "v1.44.0-eksbuild.1"
+  addon_version               = "v1.53.0-eksbuild.1"
   resolve_conflicts_on_update = "OVERWRITE" # NONE | OVERWRITE | PRESERVE
 
   service_account_role_arn = aws_iam_role.amazon_EBS_CSI_iam_role[0].arn
@@ -216,7 +153,7 @@ resource "aws_eks_addon" "amazon_cloudwatch_observability" {
   count                       = var.create_amazon_cloudwatch_observability_add_on ? 1 : 0
   cluster_name                = module.eks.cluster_name
   addon_name                  = "amazon-cloudwatch-observability"
-  addon_version               = "v4.1.0-eksbuild.1"
+  addon_version               = "v4.7.0-eksbuild.1"
   resolve_conflicts_on_update = "OVERWRITE" # NONE | OVERWRITE | PRESERVE
 
   # Add-on does not support EKS Pod Identity at this time. Please use IAM roles for service accounts (IRSA) with this add-on.
@@ -235,7 +172,7 @@ resource "aws_eks_addon" "amazon_cloudwatch_observability" {
   #     }
   #   }
   # })
-  depends_on = [ module.eks ]
+  depends_on = [module.eks]
 }
 
 resource "aws_security_group_rule" "node_port" {
