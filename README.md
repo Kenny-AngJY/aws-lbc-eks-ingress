@@ -14,9 +14,21 @@ https://medium.com/@kennyangjy/simplifying-ingress-resource-on-aws-eks-a-guide-t
 3. `terraform apply`
 <br>There should be 63 resources to be created.
 <br>As no backend is defined, the default backend will be local.
-<br>Do wait for 5-10 minutes for the resources to be provisioned.
+<br>Do wait for 10-15 minutes for the resources to be provisioned.
 
-4. When you want to install the AWS Load Balancer Controller via the Terraform helm provider, modify the default value for the variable **deploy_aws_load_balancer_controller_via_helm_provider** in *variables.tf* to true. Thereafter, apply the changes with `terraform apply`.
+<br>If the provisioning of the resources is stuck at coredns, showing:
+
+```
+module.eks.aws_eks_addon.before_compute["coredns"]: Still creating... [04m20s elapsed]
+```
+
+Simply restart the pods of the coredns deployment:
+
+```sh
+kubectl rollout restart deployment/coredns -n kube-system
+```
+
+4. When you want to install the AWS Load Balancer Controller via the Terraform helm provider, modify the default value for the variable **deploy_aws_load_balancer_controller_via_helm_provider** in *variables.tf* to `true`. Thereafter, apply the changes with `terraform apply`.
 <br>There should be 1 resource to be created.
 <br>Do wait for 1 minute for the helm chart to be provisioned.
 
