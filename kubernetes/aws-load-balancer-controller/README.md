@@ -11,7 +11,7 @@ helm repo update eks
 ## Step 3: Install the AWS Load Balancer Controller.
 helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
   -n kube-system \
-  --version 1.16.0 \
+  --version 1.17.1 \
   --set clusterName=ingress-eks-cluster \
   --set serviceAccount.create=true \
   --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"="arn:aws:iam::717240872783:role/AmazonEKSLoadBalancerControllerRole" \
