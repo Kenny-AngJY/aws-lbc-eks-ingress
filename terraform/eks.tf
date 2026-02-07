@@ -1,9 +1,9 @@
 module "eks" {
   source                                 = "terraform-aws-modules/eks/aws"
-  version                                = "21.14.0" # Published January 13, 2026
+  version                                = "21.15.1" # Published January 21, 2026
   create                                 = true
   name                                   = local.cluster_name
-  kubernetes_version                     = "1.34"
+  kubernetes_version                     = "1.35"
   authentication_mode                    = "API"
   endpoint_private_access                = true # Indicates whether or not the Amazon EKS private API server endpoint is enabled
   endpoint_public_access                 = true # Indicates whether or not the Amazon EKS public API server endpoint is enabled
