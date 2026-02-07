@@ -2,7 +2,7 @@
 AmazonEKSLoadBalancerController
 ----------------------------------------------------------------------------------- */
 resource "aws_iam_role" "AmazonEKSLoadBalancerController" {
-  count       = var.create_aws_load_balancer_controller_iam_resources ? 1 : 0
+  count       = var.create_aws_load_balancer_controller_iam_resources && !var.enable_auto_mode ? 1 : 0
   name        = "AmazonEKSLoadBalancerControllerRole"
   description = "One for each AWS account"
 
@@ -29,7 +29,7 @@ resource "aws_iam_role" "AmazonEKSLoadBalancerController" {
 }
 
 resource "aws_iam_policy" "AmazonEKSLoadBalancerController" {
-  count       = var.create_aws_load_balancer_controller_iam_resources ? 1 : 0
+  count       = var.create_aws_load_balancer_controller_iam_resources && !var.enable_auto_mode ? 1 : 0
   name        = "AWSLoadBalancerControllerIAMPolicy"
   path        = "/"
   description = "https://github.com/kubernetes-sigs/aws-load-balancer-controller/blob/main/docs/install/iam_policy.json"
@@ -281,7 +281,7 @@ resource "aws_iam_policy" "AmazonEKSLoadBalancerController" {
 }
 
 resource "aws_iam_role_policy_attachment" "AmazonEKSLoadBalancerController" {
-  count      = var.create_aws_load_balancer_controller_iam_resources ? 1 : 0
+  count      = var.create_aws_load_balancer_controller_iam_resources && !var.enable_auto_mode ? 1 : 0
   policy_arn = aws_iam_policy.AmazonEKSLoadBalancerController[0].arn
   role       = aws_iam_role.AmazonEKSLoadBalancerController[0].name
 }
@@ -292,6 +292,7 @@ AmazonEKSFargatePodExecutionRole
 # https://docs.aws.amazon.com/eks/latest/userguide/pod-execution-role.html
 # The Amazon EKS Pod execution role is required to run Pods on AWS Fargate infrastructure.
 resource "aws_iam_role" "AmazonEKSFargatePodExecutionRole" {
+  count       = var.use_fargate_profile ? 1 : 0
   name        = "AmazonEKSFargatePodExecutionRole-tf"
   description = "One for each AWS account. For Fargate pods"
 
@@ -317,7 +318,8 @@ resource "aws_iam_role" "AmazonEKSFargatePodExecutionRole" {
 }
 
 resource "aws_iam_role_policy_attachment" "AmazonEKSFargatePodExecutionRole" {
-  role       = aws_iam_role.AmazonEKSFargatePodExecutionRole.name
+  count      = var.use_fargate_profile ? 1 : 0
+  role       = aws_iam_role.AmazonEKSFargatePodExecutionRole[0].name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSFargatePodExecutionRolePolicy"
 }
 
@@ -325,6 +327,7 @@ resource "aws_iam_role_policy_attachment" "AmazonEKSFargatePodExecutionRole" {
 VPC CNI
 ----------------------------------------------------------------------------------- */
 resource "aws_iam_role" "eks_vpc_cni_role" {
+  count       = var.enable_auto_mode ? 0 : 1
   name        = "vpc-cni-irsa"
   description = "IAM role for VPC-CNI add-on"
 
@@ -374,7 +377,8 @@ resource "aws_iam_role" "eks_vpc_cni_role" {
 }
 
 resource "aws_iam_role_policy_attachment" "eks_vpc_cni_policy_attachment" {
-  role       = aws_iam_role.eks_vpc_cni_role.name
+  count      = var.enable_auto_mode ? 0 : 1
+  role       = aws_iam_role.eks_vpc_cni_role[0].name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
 }
 
@@ -383,7 +387,7 @@ resource "aws_eks_pod_identity_association" "example" {
   cluster_name    = module.eks.cluster_name
   namespace       = "kube-system"
   service_account = "aws-node"
-  role_arn        = aws_iam_role.eks_vpc_cni_role.arn
+  role_arn        = aws_iam_role.eks_vpc_cni_role[0].arn
 }
 
 /* -----------------------------------------------------------------------------------

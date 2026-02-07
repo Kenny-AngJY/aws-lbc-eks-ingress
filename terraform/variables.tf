@@ -40,7 +40,7 @@ variable "use_eks_pod_identity_agent" {
 
 variable "create_eks_worker_nodes_in_private_subnet" {
   type    = bool
-  default = false
+  default = true
 }
 
 variable "use_fargate_profile" {
@@ -97,4 +97,10 @@ variable "hosted_zone_name" {
   description = "The Route 53 Hosted Zone name to use for accessing your applications."
   type        = string
   default     = ""
+}
+
+variable "enable_auto_mode" {
+  description = "Enable EKS auto mode. This will disable creating EKS managed node groups and the basic add-ons."
+  type        = bool
+  default     = false
 }

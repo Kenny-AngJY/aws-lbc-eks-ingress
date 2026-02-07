@@ -14,7 +14,12 @@ module "eks" {
 
   encryption_config = {}
 
-  addons = {
+  compute_config = {
+    enabled    = var.enable_auto_mode
+    # node_pools = ["general-purpose"] # Comment this line out when var.enable_auto_mode is false
+  }
+
+  addons = var.enable_auto_mode ? {} : {
     coredns = {
       before_compute = true
       most_recent    = true
@@ -32,7 +37,7 @@ module "eks" {
       before_compute = true
       most_recent    = true
       #addon_version            = "v1.21.1-eksbuild.1" # major-version.minor-version.patch-version-eksbuild.build-number.
-      service_account_role_arn = aws_iam_role.eks_vpc_cni_role.arn
+      service_account_role_arn = aws_iam_role.eks_vpc_cni_role[0].arn
       configuration_values = jsonencode(
         {
           enableNetworkPolicy = "true" # To enable using the NetworkPolicy controller
@@ -63,18 +68,8 @@ module "eks" {
   ----------------------------------------------------------------------------------- */
   control_plane_subnet_ids = var.create_vpc ? (var.create_eks_worker_nodes_in_private_subnet ? module.vpc[0].list_of_private_subnet_ids : module.vpc[0].list_of_public_subnet_ids) : var.list_of_subnet_ids
 
-  # self_managed_node_groups = {
-  #   self_managed_NG1 = {
-  #     desired_capacity = 2
-  #     max_capacity     = 2
-  #     min_capacity     = 1
-  #     instance_types   = ["t3.medium", "t3.large"]
-  #     capacity_type    = "SPOT" # ON_DEMAND | SPOT
-  #   }
-  # }
-
   # EKS Managed Node Group(s)
-  eks_managed_node_groups = var.use_fargate_profile ? {} : {
+  eks_managed_node_groups = var.use_fargate_profile || var.enable_auto_mode ? {} : {
     eks_managed_NG1 = {
       min_size = 1
       max_size = 2
@@ -106,23 +101,6 @@ module "eks" {
   # To add the current caller identity as an administrator
   enable_cluster_creator_admin_permissions = true
 
-  # access_entries = {
-  #   # One access entry with a policy associated
-  #   example = {
-  #     kubernetes_groups = []
-  #     principal_arn     = "arn:aws:iam::123456789012:role/something"
-
-  #     policy_associations = {
-  #       example = {
-  #         policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSViewPolicy"
-  #         access_scope = {
-  #           namespaces = ["default"]
-  #           type       = "namespace"
-  #         }
-  #       }
-  #     }
-  #   }
-  # }
   ## https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html
   enabled_log_types = [
     "audit",
@@ -132,6 +110,7 @@ module "eks" {
     "scheduler"
   ]
 
+  deletion_protection = false
   tags = local.default_tags
 }
 
@@ -159,7 +138,6 @@ resource "aws_eks_addon" "amazon_cloudwatch_observability" {
   addon_version               = "v4.7.0-eksbuild.1"
   resolve_conflicts_on_update = "OVERWRITE" # NONE | OVERWRITE | PRESERVE
 
-  # Add-on does not support EKS Pod Identity at this time. Please use IAM roles for service accounts (IRSA) with this add-on.
   service_account_role_arn = aws_iam_role.CloudWatchAgent[0].arn
 
   # configuration_values = jsonencode({
