@@ -85,14 +85,20 @@ module "eks" {
   # Fargate Profile(s)
   fargate_profiles = var.use_fargate_profile ? {
     # Disabled logging because aws-logging configmap was not found. configmap "aws-logging" not found
-    fargate_profile_1 = {
+    profile_1 = {
       name            = "fargate_profile_1"
       create_iam_role = false
       # AWS Fargate can only use private subnets with NAT gateway to deploy your pods.
       subnets_ids = module.vpc[0].list_of_private_subnet_ids[0]
 
+      selectors = [
+        # If you omit labels, it matches ALL pods in the namespace
+        {
+          namespace = "example"
+        }
+      ]
       tags = {
-        Owner = "test"
+        Terraform = "true"
       }
     }
   } : {}
