@@ -156,6 +156,14 @@ resource "aws_eks_addon" "amazon_cloudwatch_observability" {
   depends_on = [module.eks]
 }
 
+resource "aws_eks_addon" "eks_pod_identity_agent" {
+  count                       = var.use_eks_pod_identity_agent ? 1 : 0
+  cluster_name                = module.eks.cluster_name
+  addon_name                  = "eks-pod-identity-agent"
+  addon_version               = "v1.3.10-eksbuild.2"
+  resolve_conflicts_on_update = "OVERWRITE" # NONE | OVERWRITE | PRESERVE
+}
+
 resource "aws_security_group_rule" "node_port" {
   count             = var.create_eks_worker_nodes_in_private_subnet ? 0 : 1
   type              = "ingress"
