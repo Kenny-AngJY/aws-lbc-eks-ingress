@@ -11,7 +11,8 @@ https://medium.com/@kennyangjy/simplifying-ingress-resource-on-aws-eks-a-guide-t
 ### To provision the resources in this repository:
 1. `git clone https://github.com/Kenny-AngJY/aws-lbc-eks-ingress.git`
 2. `terraform init`
-3. `terraform apply`
+3. Determine if you want to enable Auto-mode. If so, modify the `enable_auto_mode` variable to `true` and uncomment line 19 in `eks.tf`.
+4. `terraform apply`
 <br>There should be 63 resources to be created.
 <br>As no backend is defined, the default backend will be local.
 <br>Do wait for 10-15 minutes for the resources to be provisioned.
@@ -28,7 +29,7 @@ Simply restart the pods of the coredns deployment:
 kubectl rollout restart deployment/coredns -n kube-system
 ```
 
-4. When you want to install the AWS Load Balancer Controller via the Terraform helm provider, modify the default value for the variable **deploy_aws_load_balancer_controller_via_helm_provider** in *variables.tf* to `true`. Thereafter, apply the changes with `terraform apply`.
+5. When you want to install the AWS Load Balancer Controller via the Terraform helm provider, modify the default value for the variable **deploy_aws_load_balancer_controller_via_helm_provider** in *variables.tf* to `true`. Thereafter, apply the changes with `terraform apply`.
 <br>There should be 1 resource to be created.
 <br>Do wait for 1 minute for the helm chart to be provisioned.
 
